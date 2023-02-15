@@ -20,10 +20,10 @@ def head_2_ku_ears(head_pos,head_orient):
 # based on head pos and orientation, compute coordinates of ears
   ear_distance_ku100=0.0875
   theta = (90-head_orient[0]) * np.pi / 180
-  L_ear = [head_pos[0] - ear_distance_ku100 * np.cos(theta),
+  R_ear = [head_pos[0] - ear_distance_ku100 * np.cos(theta),
               head_pos[1] + ear_distance_ku100 * np.sin(theta), 
               head_pos[2]]
-  R_ear = [head_pos[0] + ear_distance_ku100 * np.cos(theta),
+  L_ear = [head_pos[0] + ear_distance_ku100 * np.cos(theta),
               head_pos[1] - ear_distance_ku100 * np.sin(theta), 
               head_pos[2]]
   return [L_ear,R_ear]
@@ -107,7 +107,7 @@ def decode_noise(MOA_noise,level,decoder):
     MOA_noise=set_level(MOA_noise.T,level[0])
     # convolve signal in ambisonics domain with a decoder
     # decoder[:,:,0] - for left ear
-    # decoder[:,:,0] - for the right ear
+    # decoder[:,:,1] - for the right ear
     noise_L=sig.fftconvolve(MOA_noise, decoder[:,:,0].T, 'full', 1).sum(0)
     noise_R=sig.fftconvolve(MOA_noise, decoder[:,:,1].T, 'full', 1).sum(0)
     noise=np.array((noise_L,noise_R))
