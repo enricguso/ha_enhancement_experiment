@@ -230,7 +230,7 @@ def compute_echograms_mic(room, src, rec, abs_wall, limits, mic_specs, rand):
     return abs_echograms
 
 
-def compute_echograms_sh(room, src, rec, abs_wall, limits, sh_orders, rand):
+def compute_echograms_sh(room, src, rec, abs_wall, limits, sh_orders, rand, head_orient):
     """
     Compute the echogram response of individual microphones for a given acoustic scenario,
     in the spherical harmonic domain.
@@ -312,7 +312,7 @@ def compute_echograms_sh(room, src, rec, abs_wall, limits, sh_orders, rand):
             echograms[ns, nr] = ims_coreMtx(room, src[ns,:], rec[nr,:], type, np.max(limits), rand)
 
     print('Apply SH directivites')
-    rec_echograms = rec_module_sh(echograms, sh_orders)
+    rec_echograms = rec_module_sh(echograms, sh_orders,head_orient)
 
     abs_echograms = np.empty((nSrc, nRec, nBands), dtype=Echogram)
     # Apply boundary absorption

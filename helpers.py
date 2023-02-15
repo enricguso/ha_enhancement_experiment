@@ -7,6 +7,18 @@ import matplotlib.pyplot as plt
 
 
 # ----------- FUNCTION DEFINITIONS: -----------
+def rotation_euler(yaw=0, pitch=0, roll=0):
+    """Matrix rotating by Yaw (around z), pitch (around y), roll (around x).
+    See https://mathworld.wolfram.com/RotationMatrix.html
+    """
+    Rx = np.array([[1, 0, 0], [0, np.cos(roll), np.sin(roll)],
+                   [0, -np.sin(roll), np.cos(roll)]])
+    Ry = np.array([[np.cos(pitch), 0, -np.sin(pitch)], [0, 1, 0],
+                   [np.sin(pitch), 0, np.cos(pitch)]])
+    Rz = np.array([[np.cos(yaw), np.sin(yaw), 0],
+                   [-np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
+    return Rz@Ry@Rx
+
 
 def place_on_circle(head_pos,r,angle_deg):
 # place a source around the reference point (like head)

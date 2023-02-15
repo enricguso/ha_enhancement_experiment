@@ -92,8 +92,9 @@ def rec_module_mic(echograms, mic_specs):
     _validate_echogram_array(rec_echograms)
     return rec_echograms
 
+#def rec_module_sh(echograms, sh_orders, head_orient):
 
-def rec_module_sh(echograms, sh_orders):
+def rec_module_sh(echograms, sh_orders, head_orient):
     """
     Apply spherical harmonic directivity gains to a set of given echograms.
 
@@ -137,7 +138,10 @@ def rec_module_sh(echograms, sh_orders):
                 sph = cart2sph(echograms[ns, nr].coords)
                 azi = sph[:, 0]
                 polar = np.pi / 2 - sph[:, 1]
-
+                ############ code added by me for rotating the head:
+                azi += (head_orient[0] * np.pi /180)
+                polar += (head_orient[1] * np.pi / 180)
+                ###############
                 sh_gains = get_sh(int(sh_orders[nr]), np.asarray([azi, polar]).transpose(), 'real')
                 # rec_echograms[ns, nr].value = sh_gains * echograms[ns, nr].value[:,np.newaxis]
                 rec_echograms[ns, nr].value = sh_gains * echograms[ns, nr].value
