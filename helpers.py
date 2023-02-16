@@ -7,17 +7,23 @@ import matplotlib.pyplot as plt
 
 
 # ----------- FUNCTION DEFINITIONS: -----------
-def rotation_euler(yaw=0, pitch=0, roll=0):
-    """Matrix rotating by Yaw (around z), pitch (around y), roll (around x).
-    See https://mathworld.wolfram.com/RotationMatrix.html
-    """
-    Rx = np.array([[1, 0, 0], [0, np.cos(roll), np.sin(roll)],
-                   [0, -np.sin(roll), np.cos(roll)]])
-    Ry = np.array([[np.cos(pitch), 0, -np.sin(pitch)], [0, 1, 0],
-                   [np.sin(pitch), 0, np.cos(pitch)]])
-    Rz = np.array([[np.cos(yaw), np.sin(yaw), 0],
-                   [-np.sin(yaw), np.cos(yaw), 0], [0, 0, 1]])
-    return Rz@Ry@Rx
+def power(signal):
+    return np.mean(signal**2)
+
+def crop_echogram(anechoic_echogram):
+    nSrc = anechoic_echogram.shape[0]
+    nRec = anechoic_echogram.shape[1]
+    nBands = anechoic_echogram.shape[2]
+    # Returns the "anechoic" version of an echogram
+    # Should keep the receiver directivy
+    for src in range(nSrc):
+        for rec in range(nRec):
+            for band in range(nBands):
+                anechoic_echogram[src, rec, band].time = anechoic_echogram[src, rec, band].time[:2]
+                anechoic_echogram[src, rec, band].coords = anechoic_echogram[src, rec, band].coords[:2, :]
+                anechoic_echogram[src, rec, band].value = anechoic_echogram[src, rec, band].value[:2,:]
+                anechoic_echogram[src, rec, band].order = anechoic_echogram[src, rec, band].order[:2,:]
+    return anechoic_echogram
 
 
 def place_on_circle(head_pos,r,angle_deg):
