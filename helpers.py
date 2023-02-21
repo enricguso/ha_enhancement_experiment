@@ -34,28 +34,41 @@ def place_on_circle(head_pos,r,angle_deg):
     src_pos=np.array([x_coord, y_coord, head_pos[2]]) 
     return [src_pos]
 
+def place_on_circle_in_room(head_pos,r,angle_deg, room):
+# place a source around the reference point (like head)
+# reducing distance if needed
+    angle_rad = (90-angle_deg) * (np.pi / 180)
+    x_coord=head_pos[0]+r*np.sin(angle_rad)
+    y_coord=head_pos[1]+r*np.cos(angle_rad)
+    #check if x_coord and y_coord are outside the room:
+    src_pos=np.array([x_coord, y_coord, head_pos[2]]) 
+    while np.any(src_pos > (room - 0.2)):
+        head_pos *= 0.99
+        src_pos, head_pos = place_on_circle_in_room(head_pos, r*0.99, angle_deg, room)
+    return src_pos, head_pos
+
 def head_2_ku_ears(head_pos,head_orient):
 # based on head pos and orientation, compute coordinates of ears
-  ear_distance_ku100=0.0875
-  theta = (90-head_orient[0]) * np.pi / 180
-  R_ear = [head_pos[0] - ear_distance_ku100 * np.cos(theta),
+    ear_distance_ku100=0.0875
+    theta = (90-head_orient[0]) * np.pi / 180
+    R_ear = [head_pos[0] - ear_distance_ku100 * np.cos(theta),
               head_pos[1] + ear_distance_ku100 * np.sin(theta), 
               head_pos[2]]
-  L_ear = [head_pos[0] + ear_distance_ku100 * np.cos(theta),
+    L_ear = [head_pos[0] + ear_distance_ku100 * np.cos(theta),
               head_pos[1] - ear_distance_ku100 * np.sin(theta), 
               head_pos[2]]
-  return [L_ear,R_ear]
+    return [L_ear,R_ear]
 
 
 def add_signals(a,b):
 # add values of two arrays of different lengths
-  if len(a) < len(b):
-    c = b.copy()
-    c[:len(a)] += a
-  else:
-    c = a.copy()
-    c[:len(b)] += b
-  return c
+    if len(a) < len(b):
+        c = b.copy()
+        c[:len(a)] += a
+    else:
+        c = a.copy()
+        c[:len(b)] += b
+    return c
 
 def plot_scene(room_dims,head_pos,head_orient,l_mic_pos,l_src_pos,perspective="xy"):
 #   function to plot the designed scene
@@ -64,31 +77,34 @@ def plot_scene(room_dims,head_pos,head_orient,l_mic_pos,l_src_pos,perspective="x
 #   head_orient - [az,el]
 #   l_src_pos - list of source positions [[x,y,z],...,[x,y,z]]
 #   perspective - which two dimensions to show 
-  if perspective=="xy":
-    dim1=1
-    dim2=0
-  elif perspective=="yz":
-    dim1=2
-    dim2=1
-  elif perspective=="xz":
-    dim1=2
-    dim2=0
-  plt.figure()
-  plt.xlim((0,room_dims[dim1]))
-  plt.ylim((0,room_dims[dim2]))
-  # plot sources and receivers
-  plt.plot(head_pos[dim1],head_pos[dim2], "o", ms=10, mew=2, color="black")
-  # plot ears
-  plt.plot(l_mic_pos[0][dim1],l_mic_pos[0][dim2], "o", ms=3, mew=2, color="blue")# left ear in blue
-  plt.plot(l_mic_pos[1][dim1],l_mic_pos[1][dim2], "o", ms=3, mew=2, color="red")# right ear in red
+    if perspective=="xy":
+        dim1=1
+        dim2=0
+    elif perspective=="yz":
+        dim1=2
+        dim2=1
+    elif perspective=="xz":
+        dim1=2
+        dim2=0
+    plt.figure()
+    plt.xlim((0,room_dims[dim1]))
+    plt.ylim((0,room_dims[dim2]))
+    # plot sources and receivers
+    plt.plot(head_pos[dim1],head_pos[dim2], "o", ms=10, mew=2, color="black")
+    # plot ears
+    plt.plot(l_mic_pos[0][dim1],l_mic_pos[0][dim2], "o", ms=3, mew=2, color="blue")# left ear in blue
+    plt.plot(l_mic_pos[1][dim1],l_mic_pos[1][dim2], "o", ms=3, mew=2, color="red")# right ear in red
 
-  for i,src_pos in enumerate(l_src_pos):
-    plt.plot(src_pos[dim1],src_pos[dim2], "o", ms=10, mew=2, color="red")
-    plt.annotate(str(i), (src_pos[dim1],src_pos[dim2]))
-  # plot head orientation if looking from above 
-  if perspective=="xy":
-    plt.plot(head_pos[dim1],head_pos[dim2], marker=(1, 1, -head_orient[0]), ms=20, mew=2,color="black")
-
+    for i,src_pos in enumerate(l_src_pos):
+        plt.plot(src_pos[dim1],src_pos[dim2], "o", ms=10, mew=2, color="red")
+        plt.annotate(str(i), (src_pos[dim1],src_pos[dim2]))
+    # plot head orientation if looking from above 
+    if perspective=="xy":
+        plt.plot(head_pos[dim1],head_pos[dim2], marker=(1, 1, -head_orient[0]), ms=20, mew=2,color="black")
+        plt.axvline(head_pos[dim1], color='y') # horizontal lines
+        plt.axhline(head_pos[dim2], color='y') # vertical lines
+        plt.grid(True)
+    
 def set_level(sig_in,L_des):
 # set FS level of the signal
     sig_zeromean=np.subtract(sig_in,np.mean(sig_in,axis=0))
