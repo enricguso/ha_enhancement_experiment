@@ -50,6 +50,19 @@ def place_on_circle_in_room(head_pos,r,angle_deg, room):
 def head_2_ku_ears(head_pos,head_orient):
 # based on head pos and orientation, compute coordinates of ears
     ear_distance_ku100=0.0875
+    theta = (head_orient[0]) * np.pi / 180
+    R_ear = [head_pos[0] - ear_distance_ku100 * np.sin(theta),
+              head_pos[1] + ear_distance_ku100 * np.cos(theta), 
+              head_pos[2]]
+    L_ear = [head_pos[0] + ear_distance_ku100 * np.sin(theta),
+              head_pos[1] - ear_distance_ku100 * np.cos(theta), 
+              head_pos[2]]
+    return [L_ear,R_ear]
+
+'''
+def head_2_ku_ears(head_pos,head_orient):
+# based on head pos and orientation, compute coordinates of ears
+    ear_distance_ku100=0.0875
     theta = (90-head_orient[0]) * np.pi / 180
     R_ear = [head_pos[0] - ear_distance_ku100 * np.cos(theta),
               head_pos[1] + ear_distance_ku100 * np.sin(theta), 
@@ -58,7 +71,7 @@ def head_2_ku_ears(head_pos,head_orient):
               head_pos[1] - ear_distance_ku100 * np.sin(theta), 
               head_pos[2]]
     return [L_ear,R_ear]
-
+'''
 
 def add_signals(a,b):
 # add values of two arrays of different lengths
@@ -69,6 +82,7 @@ def add_signals(a,b):
         c = a.copy()
         c[:len(b)] += b
     return c
+
 
 def plot_scene(room_dims,head_pos,head_orient,l_mic_pos,l_src_pos,perspective="xy"):
 #   function to plot the designed scene
@@ -86,9 +100,13 @@ def plot_scene(room_dims,head_pos,head_orient,l_mic_pos,l_src_pos,perspective="x
     elif perspective=="xz":
         dim1=2
         dim2=0
-    plt.figure()
+    fig = plt.figure()
+    ax = fig.add_subplot()
     plt.xlim((0,room_dims[dim1]))
     plt.ylim((0,room_dims[dim2]))
+    plt.axvline(head_pos[dim1], color='y') # horizontal lines
+    plt.axhline(head_pos[dim2], color='y') # vertical lines
+    plt.grid(True)
     # plot sources and receivers
     plt.plot(head_pos[dim1],head_pos[dim2], "o", ms=10, mew=2, color="black")
     # plot ears
@@ -101,10 +119,11 @@ def plot_scene(room_dims,head_pos,head_orient,l_mic_pos,l_src_pos,perspective="x
     # plot head orientation if looking from above 
     if perspective=="xy":
         plt.plot(head_pos[dim1],head_pos[dim2], marker=(1, 1, -head_orient[0]), ms=20, mew=2,color="black")
-        plt.axvline(head_pos[dim1], color='y') # horizontal lines
-        plt.axhline(head_pos[dim2], color='y') # vertical lines
-        plt.grid(True)
-    
+
+    ax.set_aspect('equal', adjustable='box')
+
+        
+
 def set_level(sig_in,L_des):
 # set FS level of the signal
     sig_zeromean=np.subtract(sig_in,np.mean(sig_in,axis=0))
