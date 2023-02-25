@@ -19,6 +19,7 @@ importlib.reload(hlp);
 
 #a = df.iloc[i]
 def process(a):
+
     try:
         mic = np.array(hlp.head_2_ku_ears(np.array([a.headC_x, a.headC_y, a.headC_z]),
                                             np.array([a.headOrient_azi,a.headOrient_ele])))
@@ -103,9 +104,9 @@ def process(a):
         sf.write(pjoin(pjoin(writepath, 'noise'), os.path.splitext(a.speech_path)[0]+'.wav'), noise.T, fs, subtype='FLOAT')
         sf.write(pjoin(pjoin(writepath, 'ir'), os.path.splitext(a.speech_path)[0]+'.wav'), bin_ir.T, fs, subtype='FLOAT')
         sf.write(pjoin(pjoin(writepath, 'ane_ir'), os.path.splitext(a.speech_path)[0]+'.wav'), bin_aneIR.T, fs, subtype='FLOAT')
-        print('Processed ' + a.speech_path)
+        print('Processed ' + str(a.idx))
     except:
-        print('ERROR when processing ' + a.speech_path)
+        print('ERROR when processing ' + str(a.idx))
 
 if __name__ == '__main__':
     num_workers = 8

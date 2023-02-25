@@ -56,15 +56,17 @@ def place_on_circle(head_pos,r,angle_deg):
 def place_on_circle_in_room(head_pos,r,angle_deg, room):
 # place a source around the reference point (like head)
 # reducing distance if needed
-    angle_rad = (90-angle_deg) * (np.pi / 180)
-    x_coord=head_pos[0]+r*np.sin(angle_rad)
-    y_coord=head_pos[1]+r*np.cos(angle_rad)
+    src_pos = place_on_circle(head_pos, r, angle_deg)[0]
+    #x_coord=head_pos[0]+r*np.sin(angle_rad)
+    #y_coord=head_pos[1]+r*np.cos(angle_rad)
     #check if x_coord and y_coord are outside the room:
-    src_pos=np.array([x_coord, y_coord, head_pos[2]]) 
-    while np.any(src_pos > (room - 0.2)):
-        head_pos *= 0.99
-        src_pos, head_pos = place_on_circle_in_room(head_pos, r*0.99, angle_deg, room)
-    return src_pos, head_pos
+    #src_pos=np.array([x_coord, y_coord, head_pos[2]]) 
+    src_pos[src_pos < 0.2] = 0.2
+    while np.any(src_pos > room - 0.2):
+        r*=0.9
+        src_pos = place_on_circle(head_pos, r, angle_deg)[0]
+        src_pos[src_pos < 0.2] = 0.2
+    return src_pos
 
 def head_2_ku_ears(head_pos,head_orient):
 # based on head pos and orientation, compute coordinates of ears
