@@ -307,18 +307,18 @@ def compute_echograms_sh(room, src, rec, abs_wall, limits, sh_orders, rand, head
     echograms = np.empty((nSrc, nRec), dtype=Echogram)
     for ns in range(nSrc):
         for nr in range(nRec):
-            print('Compute echogram: Source ' + str(ns) + ' - Receiver ' + str(nr))
+            #print('Compute echogram: Source ' + str(ns) + ' - Receiver ' + str(nr))
             # Compute echogram
             echograms[ns, nr] = ims_coreMtx(room, src[ns,:], rec[nr,:], type, np.max(limits), rand)
 
-    print('Apply SH directivites')
+    #print('Apply SH directivites')
     rec_echograms = rec_module_sh(echograms, sh_orders,head_orient)
 
     abs_echograms = np.empty((nSrc, nRec, nBands), dtype=Echogram)
     # Apply boundary absorption
     for ns in range(nSrc):
         for nr in range(nRec):
-            print ('Apply absorption: Source ' + str(ns) + ' - Receiver ' + str(nr))
+            #print ('Apply absorption: Source ' + str(ns) + ' - Receiver ' + str(nr))
             # Compute echogram
             abs_echograms[ns, nr] = apply_absorption(rec_echograms[ns, nr], abs_wall, limits)
 

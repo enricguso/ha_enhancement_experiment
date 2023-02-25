@@ -299,14 +299,14 @@ def render_rirs_sh(echograms, band_centerfreqs, fs):
     for ns in range(nSrc):
         for nr in range(nRec):
 
-            print('Rendering echogram: Source ' + str(ns) + ' - Receiver ' + str(nr))
+            #print('Rendering echogram: Source ' + str(ns) + ' - Receiver ' + str(nr))
             nSH = np.shape(echograms[ns, nr, 0].value)[1]
 
             tempIR = np.zeros((L_rir, nSH, nBands))
             for nb in range(nBands):
                 tempIR[:, :, nb] = render_rirs(echograms[ns, nr, nb], endtime, fs, fractional)
 
-            print('     Filtering and combining bands')
+            #print('     Filtering and combining bands')
             for nh in range(nSH):
                 rirs[:, nh, nr, ns] = filter_rirs(tempIR[:, nh, :], band_centerfreqs, fs).squeeze()
     return rirs

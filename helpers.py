@@ -10,6 +10,25 @@ import matplotlib.pyplot as plt
 def power(signal):
     return np.mean(signal**2)
 
+def extend_noise(noise, max_length, fs):
+    """ Concatenate noise using hanning window"""
+    noise_ex = noise
+    window = np.hanning(fs + 1)
+    # Increasing window
+    i_w = window[:len(window) // 2 + 1]
+    # Decreasing window
+    d_w = window[len(window) // 2::-1]
+    # Extend until max_length is reached
+    while len(noise_ex) < max_length:
+        noise_ex = np.concatenate((noise_ex[:len(noise_ex) - len(d_w)],
+                                   np.multiply(
+                                       noise_ex[len(noise_ex) - len(d_w):],
+                                       d_w) + np.multiply(
+                                       noise[:len(i_w)], i_w),
+                                   noise[len(i_w):]))
+    noise_ex = noise_ex[:max_length]
+    return noise_ex
+
 def crop_echogram(anechoic_echogram):
     nSrc = anechoic_echogram.shape[0]
     nRec = anechoic_echogram.shape[1]
