@@ -83,8 +83,7 @@ def process(a):
                             sig.fftconvolve(np.squeeze(ane_rirs[:,:,1, 0]), decoder[:,:,1], 'full', 0).sum(1)])
         reverberant_src = np.array([sig.fftconvolve(speech, bin_ir[0, :], 'same'), sig.fftconvolve(speech, bin_ir[1, :], 'same')])
         anechoic_src = np.array([sig.fftconvolve(speech, bin_aneIR[0, :], 'same'), sig.fftconvolve(speech, bin_aneIR[1, :], 'same')])
-        ini_snr = 10 * np.log10(hlp.power(reverberant_src) / hlp.power(noise) + np.finfo(ini_snr.dtype).resolution)
-
+        ini_snr = 10 * np.log10(hlp.power(reverberant_src) / hlp.power(noise) + np.finfo(noise.dtype).resolution)
         noise_gain_db = ini_snr - a.snr
 
         noise = noise * np.power(10, noise_gain_db/20)
