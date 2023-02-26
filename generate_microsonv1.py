@@ -83,7 +83,7 @@ def process(a):
                             sig.fftconvolve(np.squeeze(ane_rirs[:,:,1, 0]), decoder[:,:,1], 'full', 0).sum(1)])
         reverberant_src = np.array([sig.fftconvolve(speech, bin_ir[0, :], 'same'), sig.fftconvolve(speech, bin_ir[1, :], 'same')])
         anechoic_src = np.array([sig.fftconvolve(speech, bin_aneIR[0, :], 'same'), sig.fftconvolve(speech, bin_aneIR[1, :], 'same')])
-        ini_snr = 10 * np.log10(hlp.power(reverberant_src) / hlp.power(noise))
+        ini_snr = 10 * np.log10(hlp.power(reverberant_src) / hlp.power(noise) + np.finfo(ini_snr.dtype).resolution)
 
         noise_gain_db = ini_snr - a.snr
 
@@ -140,3 +140,4 @@ if __name__ == '__main__':
     config['success'] = True
     with open(pjoin(output_path, 'config.json'), 'w') as f:
         json.dump(config, f)
+    print('All files processed. Done.')
