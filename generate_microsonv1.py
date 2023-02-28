@@ -17,6 +17,26 @@ import helpers as hlp
 import importlib
 importlib.reload(hlp);
 
+def bell(fc, fs, gain, Q):
+    wc = 2 * np.pi * fc / fs
+    c = 1.0 / np.tan(wc / 2.0)
+    phi = c*c
+    Knum = c / Q
+    Kdenom = Knum
+
+    if (gain > 1.0):
+        Knum *= gain
+    elif (gain < 1.0):
+        Kdenom /= gain
+
+    a0 = phi + Kdenom + 1.0
+
+    b = [(phi + Knum + 1.0) / a0, 2.0 *
+         (1.0 - phi) / a0, (phi - Knum + 1.0) / a0]
+    a = [1, 2.0 * (1.0 - phi) / a0, (phi - Kdenom + 1.0) / a0]
+
+    return np.asarray(b), np.asarray(a)
+
 #a = df.iloc[i]
 def process(a):
 
@@ -71,18 +91,25 @@ def process(a):
 
         # Generally, we simulate up to RT60:
         limits = np.minimum(rt60, maxlim)
-
         abs_echograms = srs.compute_echograms_sh(room, src, mic, abs_walls, limits, ambi_order, rims_d, head_orient)
         ane_echograms = hlp.crop_echogram(copy.deepcopy(abs_echograms))
         mic_rirs = srs.render_rirs_sh(abs_echograms, band_centerfreqs, fs)
         ane_rirs = srs.render_rirs_sh(ane_echograms, band_centerfreqs, fs)
-        #hlp.plot_scene(room,np.array([a.headC_x, a.headC_y, a.headC_z]),head_orient,mic,src,perspective="xy")
+        # Decode SH IRs to binaural
         bin_ir = np.array([sig.fftconvolve(np.squeeze(mic_rirs[:,:,0, 0]), decoder[:,:,0], 'full', 0).sum(1),
                             sig.fftconvolve(np.squeeze(mic_rirs[:,:,1, 0]), decoder[:,:,1], 'full', 0).sum(1)])
         bin_aneIR = np.array([sig.fftconvolve(np.squeeze(ane_rirs[:,:,0, 0]), decoder[:,:,0], 'full', 0).sum(1),
                             sig.fftconvolve(np.squeeze(ane_rirs[:,:,1, 0]), decoder[:,:,1], 'full', 0).sum(1)])
+        # Apply to the source signal
         reverberant_src = np.array([sig.fftconvolve(speech, bin_ir[0, :], 'same'), sig.fftconvolve(speech, bin_ir[1, :], 'same')])
         anechoic_src = np.array([sig.fftconvolve(speech, bin_aneIR[0, :], 'same'), sig.fftconvolve(speech, bin_aneIR[1, :], 'same')])
+
+        # Apply RIC correction
+        reverberant_src = np.array([sig.lfilter(filt_b, filt_a, reverberant_src[0]), sig.lfilter(filt_b, filt_a, reverberant_src[1])])
+
+        anechoic_src = np.array([sig.lfilter(filt_b, filt_a, anechoic_src[0]), sig.lfilter(filt_b, filt_a, anechoic_src[1])])
+
+
         ini_snr = 10 * np.log10(hlp.power(reverberant_src) / hlp.power(noise) + np.finfo(noise.dtype).resolution)
         noise_gain_db = ini_snr - a.snr
 
@@ -103,14 +130,18 @@ def process(a):
         sf.write(pjoin(pjoin(writepath, 'noise'), os.path.splitext(a.speech_path)[0]+'.wav'), noise.T, fs, subtype='FLOAT')
         sf.write(pjoin(pjoin(writepath, 'ir'), os.path.splitext(a.speech_path)[0]+'.wav'), bin_ir.T, fs, subtype='FLOAT')
         sf.write(pjoin(pjoin(writepath, 'ane_ir'), os.path.splitext(a.speech_path)[0]+'.wav'), bin_aneIR.T, fs, subtype='FLOAT')
+        sf.write(pjoin(pjoin(writepath, 'mono_ir'), os.path.splitext(a.speech_path)[0]+'.wav'), mic_rirs[:, 0, 0, 0], fs, subtype='FLOAT')
+
+
         print('Processed ' + str(a.idx))
     except:
         print('ERROR when processing ' + str(a.idx))
 
 if __name__ == '__main__':
+    print('RIC-corrected dataseg generation script. Microson_v1')
     num_workers = 8
 
- #   decoder_path = 'ku100_inear_test.mat'
+    #   decoder_path = 'ku100_inear_test.mat'
     decoder_path = 'ku100_ha_test.mat'
 
     mls_path = '/home/ubuntu/Data/mls_spanish'
@@ -124,14 +155,36 @@ if __name__ == '__main__':
     maxlim = 2.
     band_centerfreqs=np.array([1000])
     decoder = mat73.loadmat(decoder_path)['hnm']
-    # we copy the metadata file to the output dir
-    df.to_csv(pjoin(output_path, 'meta_microson_v1.csv'), index=False)
-    # also save the configuration:
+    
+    # make dirs
+    sets = ['train', 'dev', 'test']
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    for subset in sets:
+        if not os.path.exists(pjoin(output_path, subset)):
+            os.makedirs(pjoin(output_path, subset))
+        if not os.path.exists(pjoin(pjoin(output_path, subset), 'anechoic')):
+            os.makedirs(pjoin(pjoin(output_path, subset), 'anechoic'))
+        if not os.path.exists(pjoin(pjoin(output_path, subset), 'reverberant')):
+            os.makedirs(pjoin(pjoin(output_path, subset), 'reverberant'))
+        if not os.path.exists(pjoin(pjoin(output_path, subset), 'noise')):
+            os.makedirs(pjoin(pjoin(output_path, subset), 'noise'))
+        if not os.path.exists(pjoin(pjoin(output_path, subset), 'ir')):
+            os.makedirs(pjoin(pjoin(output_path, subset), 'ir'))
+        if not os.path.exists(pjoin(pjoin(output_path, subset), 'ane_ir')):
+            os.makedirs(pjoin(pjoin(output_path, subset), 'ane_ir'))
+        if not os.path.exists(pjoin(pjoin(output_path, subset), 'mono_ir')):
+            os.makedirs(pjoin(pjoin(output_path, subset), 'mono_ir'))  
+     # also save the configuration:
     config = {'mls_path' : mls_path, 'wham_path' : wham_path, 
               'decoder_path' : decoder_path, 'df_path' : df_path,
               'fs' : fs, 'ambi_order': ambi_order, 'success': False}
     with open(pjoin(output_path, 'config.json'), 'w') as f:
         json.dump(config, f)
+    
+    # Correction filter for the RIC resonance of KU100_HA HRIRs
+    filt_b, filt_a = bell(2300, fs, np.power(10, -18/20), 8.)
+
 
     with Pool(num_workers) as p:
         p.map(process, [df.iloc[i] for i in range(len(df))])
